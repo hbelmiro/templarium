@@ -1,0 +1,16 @@
+= Go templarium plug-in
+
+This plug-in helps create a new Go project by generating the necessary files, including the `go.mod` file.
+
+== Usage
+
+To create a new Go project, run:
+
+[source,sh]
+templarium go --version=1.22 --module-name=my-module
+
+`--module-name` (`-m`): The module name for the Go project.
+
+`--version` (`-v`): The Go version to use.
+
+This will create a `go.mod` file in the current directory with the project configuration.
