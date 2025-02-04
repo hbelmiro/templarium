@@ -2,8 +2,8 @@ package golang
 
 import (
 	"github.com/cockroachdb/errors"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
-	"os"
 	"path/filepath"
 	"runtime"
 	"text/template"
@@ -21,15 +21,9 @@ func init() {
 			version, _ := cmd.Flags().GetString("version")
 			moduleName, _ := cmd.Flags().GetString("module-name")
 
-			if version == "" {
-				return errors.New("the --version flag is required")
-			}
+			gCmd := NewGoCommand(afero.NewOsFs())
 
-			if moduleName == "" {
-				return errors.New("the --module-name flag is required")
-			}
-
-			err := createGoModFile(moduleName, version)
+			err := gCmd.Run(moduleName, version)
 			if err != nil {
 				return errors.Wrap(err, "error creating go.mod file")
 			}
@@ -42,29 +36,48 @@ func init() {
 	command.Flags().StringP("module-name", "m", "", "Module name")
 }
 
-type Data struct {
-	GoVersion  string
-	ModuleName string
+func Command() *cobra.Command {
+	return command
 }
 
-func createGoModFile(moduleName string, version string) error {
-	file, err := os.Create(goModName)
+type GoCommand interface {
+	Run(moduleName string, version string) error
+}
+
+func NewGoCommand(fileSystem afero.Fs) GoCommand {
+	return &goCommand{fileSystem: fileSystem}
+}
+
+type goCommand struct {
+	fileSystem   afero.Fs
+	cobraCommand cobra.Command
+}
+
+func (g goCommand) Run(moduleName string, version string) error {
+	if version == "" {
+		return errors.New("the --version flag is required")
+	}
+	if moduleName == "" {
+		return errors.New("the --module-name flag is required")
+	}
+
+	file, err := g.fileSystem.Create(goModName)
 	if err != nil {
 		return errors.Wrap(err, "error creating file")
 	}
-	defer func(file *os.File) {
+	defer func(file afero.File) {
 		err := file.Close()
 		if err != nil {
 			panic(errors.Wrap(err, "error closing file"))
 		}
 	}(file)
 
-	tmpl, err := template.ParseFiles(filepath.Join(getRootDirectory(), "go.mod.tmpl"))
+	tmpl, err := template.ParseFiles(filepath.Join(g.getRootDirectory(), "go.mod.tmpl"))
 	if err != nil {
 		return errors.Wrap(err, "error parsing file")
 	}
 
-	err = tmpl.Execute(file, Data{
+	err = tmpl.Execute(file, goModVariables{
 		GoVersion:  version,
 		ModuleName: moduleName,
 	})
@@ -75,15 +88,11 @@ func createGoModFile(moduleName string, version string) error {
 	return nil
 }
 
-func getRootDirectory() string {
+func (g goCommand) getRootDirectory() string {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		panic("unable to get root directory")
 	}
 
 	return filepath.Dir(filename)
-}
-
-func Command() *cobra.Command {
-	return command
 }
