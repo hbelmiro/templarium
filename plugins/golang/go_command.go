@@ -1,8 +1,7 @@
 package golang
 
 import (
-	"errors"
-	"fmt"
+	"github.com/cockroachdb/errors"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
@@ -11,6 +10,8 @@ import (
 )
 
 var command *cobra.Command
+
+const goModName = "go.mod-test"
 
 func init() {
 	command = &cobra.Command{
@@ -28,9 +29,11 @@ func init() {
 				return errors.New("the --module-name flag is required")
 			}
 
-			createGoModFile(moduleName, version)
+			err := createGoModFile(moduleName, version)
+			if err != nil {
+				return errors.Wrap(err, "error creating go.mod file")
+			}
 
-			fmt.Printf("Go version %s!\n", version)
 			return nil
 		},
 	}
@@ -44,29 +47,21 @@ type Data struct {
 	ModuleName string
 }
 
-func createGoModFile(moduleName string, version string) {
-	file, err := os.Create("go.mod-test")
+func createGoModFile(moduleName string, version string) error {
+	file, err := os.Create(goModName)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
+		return errors.Wrap(err, "error creating file")
 	}
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			fmt.Println("Error closing file:", err)
+			panic(errors.Wrap(err, "error closing file"))
 		}
 	}(file)
 
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("unable to get current file path")
-	}
-
-	baseDir := filepath.Dir(filename)
-
-	tmpl, err := template.ParseFiles(filepath.Join(baseDir, "go.mod"))
+	tmpl, err := template.ParseFiles(filepath.Join(getRootDirectory(), "go.mod.tmpl"))
 	if err != nil {
-		panic(err)
+		return errors.Wrap(err, "error parsing file")
 	}
 
 	err = tmpl.Execute(file, Data{
@@ -74,8 +69,19 @@ func createGoModFile(moduleName string, version string) {
 		ModuleName: moduleName,
 	})
 	if err != nil {
-		panic(err)
+		return errors.Wrap(err, "error executing template")
 	}
+
+	return nil
+}
+
+func getRootDirectory() string {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		panic("unable to get root directory")
+	}
+
+	return filepath.Dir(filename)
 }
 
 func Command() *cobra.Command {
