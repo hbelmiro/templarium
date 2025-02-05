@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	// templarium add go --go-version=1.23.5
+	// go run main.go go --version=123 --module-name=Helber
 	var rootCmd = &cobra.Command{
 		Use:   "templarium",
 		Short: "A simple CLI tool",

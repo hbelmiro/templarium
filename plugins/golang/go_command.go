@@ -31,7 +31,7 @@ func (g goCommand) GetCobraCommand() *cobra.Command {
 
 			err := g.run(moduleName, version)
 			if err != nil {
-				return errors.Wrap(err, "error creating go.mod file")
+				return errors.Wrap(err, "error creating go command")
 			}
 
 			return nil
@@ -44,25 +44,31 @@ func (g goCommand) GetCobraCommand() *cobra.Command {
 	return command
 }
 
-func (g goCommand) run(moduleName string, version string) error {
-	if version == "" {
-		return errors.New("the --version flag is required")
-	}
-	if moduleName == "" {
-		return errors.New("the --module-name flag is required")
-	}
-
+func (g goCommand) createGoModFile() (afero.File, error) {
 	const goModName = "go.mod-test"
 	file, err := g.fileSystem.Create(goModName)
 	if err != nil {
-		return errors.Wrap(err, "error creating file")
+		return nil, errors.Wrap(err, "error creating file")
 	}
+	return file, nil
+}
+
+func (g goCommand) run(moduleName string, version string) error {
+	err := validateFlags(moduleName, version)
+	if err != nil {
+		return err
+	}
+
+	file, err := g.createGoModFile()
 	defer func(file afero.File) {
 		err := file.Close()
 		if err != nil {
 			panic(errors.Wrap(err, "error closing file"))
 		}
 	}(file)
+	if err != nil {
+		return errors.Wrap(err, "error creating go.mod file")
+	}
 
 	tmpl, err := template.ParseFiles(filepath.Join(g.getRootDirectory(), "go.mod.tmpl"))
 	if err != nil {
@@ -77,6 +83,16 @@ func (g goCommand) run(moduleName string, version string) error {
 		return errors.Wrap(err, "error executing template")
 	}
 
+	return nil
+}
+
+func validateFlags(moduleName string, version string) error {
+	if version == "" {
+		return errors.New("the --version flag is required")
+	}
+	if moduleName == "" {
+		return errors.New("the --module-name flag is required")
+	}
 	return nil
 }
 
