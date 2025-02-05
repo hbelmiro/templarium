@@ -9,21 +9,27 @@ import (
 	"text/template"
 )
 
-var command *cobra.Command
+type GoCommand interface {
+	GetCobraCommand() *cobra.Command
+}
 
-const goModName = "go.mod-test"
+func NewGoCommand(fileSystem afero.Fs) GoCommand {
+	return &goCommand{fileSystem: fileSystem}
+}
 
-func init() {
-	command = &cobra.Command{
+type goCommand struct {
+	fileSystem afero.Fs
+}
+
+func (g goCommand) GetCobraCommand() *cobra.Command {
+	command := &cobra.Command{
 		Use:   "go",
 		Short: "Create a Go project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			version, _ := cmd.Flags().GetString("version")
 			moduleName, _ := cmd.Flags().GetString("module-name")
 
-			gCmd := NewGoCommand(afero.NewOsFs())
-
-			err := gCmd.Run(moduleName, version)
+			err := g.run(moduleName, version)
 			if err != nil {
 				return errors.Wrap(err, "error creating go.mod file")
 			}
@@ -34,26 +40,11 @@ func init() {
 
 	command.Flags().StringP("version", "v", "", "Go project version")
 	command.Flags().StringP("module-name", "m", "", "Module name")
-}
 
-func Command() *cobra.Command {
 	return command
 }
 
-type GoCommand interface {
-	Run(moduleName string, version string) error
-}
-
-func NewGoCommand(fileSystem afero.Fs) GoCommand {
-	return &goCommand{fileSystem: fileSystem}
-}
-
-type goCommand struct {
-	fileSystem   afero.Fs
-	cobraCommand cobra.Command
-}
-
-func (g goCommand) Run(moduleName string, version string) error {
+func (g goCommand) run(moduleName string, version string) error {
 	if version == "" {
 		return errors.New("the --version flag is required")
 	}
@@ -61,6 +52,7 @@ func (g goCommand) Run(moduleName string, version string) error {
 		return errors.New("the --module-name flag is required")
 	}
 
+	const goModName = "go.mod-test"
 	file, err := g.fileSystem.Create(goModName)
 	if err != nil {
 		return errors.Wrap(err, "error creating file")

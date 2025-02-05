@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"os"
 	"templarium/plugins/golang"
@@ -13,7 +14,11 @@ func main() {
 		Short: "A simple CLI tool",
 	}
 
-	rootCmd.AddCommand(golang.Command())
+	fileSystem := afero.NewOsFs()
+
+	goCommand := golang.NewGoCommand(fileSystem)
+
+	rootCmd.AddCommand(goCommand.GetCobraCommand())
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
