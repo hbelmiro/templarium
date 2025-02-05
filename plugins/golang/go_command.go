@@ -14,6 +14,10 @@ type GoCommand interface {
 }
 
 func NewGoCommand(fileSystem afero.Fs) GoCommand {
+	return newGoCommand(fileSystem)
+}
+
+func newGoCommand(fileSystem afero.Fs) *goCommand {
 	return &goCommand{fileSystem: fileSystem}
 }
 
