@@ -6,11 +6,13 @@ import (
 	"github.com/spf13/cobra"
 	"path/filepath"
 	"runtime"
+	"templarium/plugins/golang/commands/cli"
+	"templarium/plugins/sdk"
 	"text/template"
 )
 
 type GoCommand interface {
-	GetCobraCommand() *cobra.Command
+	sdk.Command
 }
 
 func NewGoCommand(fileSystem afero.Fs) GoCommand {
@@ -18,22 +20,16 @@ func NewGoCommand(fileSystem afero.Fs) GoCommand {
 }
 
 func newGoCommand(fileSystem afero.Fs) *goCommand {
-	return &goCommand{fileSystem: fileSystem}
-}
+	goCmd := &goCommand{}
 
-type goCommand struct {
-	fileSystem afero.Fs
-}
-
-func (g goCommand) GetCobraCommand() *cobra.Command {
-	command := &cobra.Command{
+	cobraCommand := &cobra.Command{
 		Use:   "go",
 		Short: "Create a Go project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			version, _ := cmd.Flags().GetString("version")
 			moduleName, _ := cmd.Flags().GetString("module-name")
 
-			err := g.run(moduleName, version)
+			err := goCmd.run(moduleName, version)
 			if err != nil {
 				return errors.Wrap(err, "error creating go command")
 			}
@@ -42,15 +38,24 @@ func (g goCommand) GetCobraCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringP("version", "v", "", "Go project version")
-	command.Flags().StringP("module-name", "m", "", "Module name")
+	cobraCommand.Flags().StringP("version", "v", "", "Go project version")
+	cobraCommand.Flags().StringP("module-name", "m", "", "Module name")
 
-	return command
+	goCmd.CobraCommand = cobraCommand
+	goCmd.FileSystem = fileSystem
+
+	goCmd.AddCommand(cli.NewCliCommand(goCmd.FileSystem))
+
+	return goCmd
+}
+
+type goCommand struct {
+	sdk.BaseCommand
 }
 
 func (g goCommand) createGoModFile() (afero.File, error) {
 	const goModName = "go.mod"
-	file, err := g.fileSystem.Create(goModName)
+	file, err := g.FileSystem.Create(goModName)
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating file")
 	}

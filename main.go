@@ -16,9 +16,7 @@ func main() {
 
 	fileSystem := afero.NewOsFs()
 
-	goCommand := golang.NewGoCommand(fileSystem)
-
-	rootCmd.AddCommand(goCommand.GetCobraCommand())
+	rootCmd.AddCommand(golang.NewGoCommand(fileSystem).GetCobraCommand())
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
