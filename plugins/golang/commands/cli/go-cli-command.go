@@ -1,9 +1,12 @@
 package cli
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
+	"templarium/plugins/golang/codegen"
 	"templarium/plugins/sdk"
+	"templarium/runner"
 )
 
 type CliCommand interface {
@@ -15,24 +18,31 @@ func NewCliCommand(fileSystem afero.Fs) CliCommand {
 }
 
 func newCliCommand(fileSystem afero.Fs) *cliCommand {
-	c := &cliCommand{}
+	cliCmd := &cliCommand{}
 
-	howdyCommand := &cobra.Command{
-		Use:   "howdy",
-		Short: "say howdy",
+	cobraCommand := &cobra.Command{
+		Use:   "cli",
+		Short: "Create a CLI Go project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name, _ := cmd.Flags().GetString("name")
-			print("Howdy " + name)
+			version, _ := cmd.Flags().GetString("version")
+			moduleName, _ := cmd.Flags().GetString("module-name")
+
+			err := codegen.NewGoCodeGenerator(fileSystem, runner.DefaultRunner()).CreateGoCliProject(moduleName, version)
+			if err != nil {
+				return errors.Wrap(err, "error creating go project")
+			}
+
 			return nil
 		},
 	}
 
-	howdyCommand.Flags().StringP("name", "n", "", "Howdy name")
+	cobraCommand.Flags().StringP("version", "v", "", "Go project version")
+	cobraCommand.Flags().StringP("module-name", "m", "", "Module name")
 
-	c.CobraCommand = howdyCommand
-	c.FileSystem = fileSystem
+	cliCmd.CobraCommand = cobraCommand
+	cliCmd.FileSystem = fileSystem
 
-	return c
+	return cliCmd
 }
 
 type cliCommand struct {
