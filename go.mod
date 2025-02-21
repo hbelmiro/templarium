@@ -5,7 +5,7 @@ go 1.23.5
 require (
 	github.com/cockroachdb/errors v1.11.3
 	github.com/spf13/afero v1.12.0
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 )
 
