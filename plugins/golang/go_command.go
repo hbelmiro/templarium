@@ -6,12 +6,12 @@ import (
 	"github.com/spf13/cobra"
 	"templarium/plugins/golang/codegen"
 	"templarium/plugins/golang/commands/cli"
-	"templarium/plugins/sdk"
 	"templarium/runner"
+	sdk2 "templarium/sdk"
 )
 
 type GoCommand interface {
-	sdk.Command
+	sdk2.Command
 }
 
 func NewGoCommand(fileSystem afero.Fs) GoCommand {
@@ -51,7 +51,7 @@ func newGoCommand(fileSystem afero.Fs) *goCommand {
 }
 
 type goCommand struct {
-	sdk.BaseCommand
+	sdk2.BaseCommand
 
 	goCodeGenerator codegen.GoCodeGenerator
 }

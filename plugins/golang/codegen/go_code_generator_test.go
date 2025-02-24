@@ -29,10 +29,17 @@ func TestCreateGoCliProject(t *testing.T) {
 		CreateGoCliProject("my-module", "1.22")
 	require.NoError(t, err)
 
-	file, err := afero.ReadFile(fileSystem, "go.mod")
-	require.NotNil(t, file)
+	goModFile, err := afero.ReadFile(fileSystem, "go.mod")
+	require.NotNil(t, goModFile)
 
-	expectedContents, err := os.ReadFile("test-resources/go.mod-test-create-go-cli-project")
+	goModFileExpectedContents, err := os.ReadFile("test-resources/go.mod-test-create-go-cli-project")
 	require.NoError(t, err)
-	require.Equal(t, string(expectedContents), string(file))
+	require.Equal(t, string(goModFileExpectedContents), string(goModFile))
+
+	mainFile, err := afero.ReadFile(fileSystem, "main.go")
+	require.NotNil(t, mainFile)
+
+	mainFileExpectedContents, err := os.ReadFile("resources/cli-main.tmpl")
+	require.NoError(t, err)
+	require.Equal(t, string(mainFileExpectedContents), string(mainFile))
 }
