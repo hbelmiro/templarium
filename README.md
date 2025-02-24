@@ -1,11 +1,19 @@
 # templarium
 
+This is a CLI application for generating project templates.
+
+## Usage
+
 ```shell
-go run main.go go --version=123 --module-name=my-module
-```
+$ templarium [command]
+  
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  go          Create a Go project
+  help        Help about any command
 
-This should output:
+Flags:
+  -h, --help   help for templarium
 
-```
-Hello, John!
+Use "templarium [command] --help" for more information about a command.
 ```

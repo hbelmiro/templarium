@@ -46,10 +46,20 @@ func (g goCodeGenerator) CreateGoCliProject(moduleName string, version string) e
 		CobraVersion: cobraVersion,
 	}
 
-	return g.createGoProject(moduleName, version, "resources/go.mod-cli.tmpl", &variables)
+	err = g.createGoProject(moduleName, version, "resources/go.mod-cli.tmpl", &variables)
+	if err != nil {
+		return errors.Wrap(err, "error creating Go CLI project")
+	}
+
+	err = g.createMainCliFile()
+	if err != nil {
+		return errors.Wrap(err, "error creating Go CLI project")
+	}
+
+	return err
 }
 
-func (g goCodeGenerator) createGoProject(moduleName string, version string, goModtemplatePath string, variables *goModVariables) error {
+func (g goCodeGenerator) createGoProject(moduleName string, version string, goModTemplatePath string, variables *goModVariables) error {
 	err := validateFlags(moduleName, version)
 	if err != nil {
 		return errors.Wrap(err, "error creating Go project")
@@ -66,7 +76,7 @@ func (g goCodeGenerator) createGoProject(moduleName string, version string, goMo
 		return errors.Wrap(err, "error creating go.mod file")
 	}
 
-	tmpl, err := template.ParseFiles(filepath.Join(g.getRootDirectory(), goModtemplatePath))
+	tmpl, err := template.ParseFiles(filepath.Join(g.getRootDirectory(), goModTemplatePath))
 	if err != nil {
 		return errors.Wrap(err, "error parsing file")
 	}
@@ -116,4 +126,31 @@ func (g goCodeGenerator) createGoModFile() (afero.File, error) {
 		return nil, errors.Wrap(err, "error creating file")
 	}
 	return file, nil
+}
+
+func (g goCodeGenerator) createMainCliFile() error {
+	const fileName = "main.go"
+
+	file, err := g.fileSystem.Create(fileName)
+	if err != nil {
+		return errors.Wrap(err, "error creating file")
+	}
+	defer func(file afero.File) {
+		err := file.Close()
+		if err != nil {
+			panic(errors.Wrap(err, "error closing file"))
+		}
+	}(file)
+
+	tmpl, err := template.ParseFiles(filepath.Join(g.getRootDirectory(), "resources/cli-main.tmpl"))
+	if err != nil {
+		return errors.Wrap(err, "error parsing file")
+	}
+
+	err = tmpl.Execute(file, nil)
+	if err != nil {
+		return errors.Wrap(err, "error executing template")
+	}
+
+	return nil
 }

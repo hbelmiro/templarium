@@ -14,3 +14,14 @@ templarium go --version=1.22 --module-name=my-module
 `--version` (`-v`): The Go version to use.
 
 This will create a `go.mod` file in the current directory with the project configuration.
+
+== Subcommands
+
+=== `go cli` command
+
+Creates a Go project for a CLI.
+
+==== Usage
+
+[source,sh]
+templarium go cli --version=1.24.0 --module-name=my-module

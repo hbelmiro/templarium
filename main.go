@@ -8,10 +8,9 @@ import (
 )
 
 func main() {
-	// go run main.go go --version=123 --module-name=Helber
 	var rootCmd = &cobra.Command{
 		Use:   "templarium",
-		Short: "A simple CLI tool",
+		Short: "This is a CLI application for generating project templates.",
 	}
 
 	fileSystem := afero.NewOsFs()

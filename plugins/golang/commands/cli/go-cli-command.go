@@ -5,12 +5,12 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"templarium/plugins/golang/codegen"
-	"templarium/plugins/sdk"
 	"templarium/runner"
+	sdk2 "templarium/sdk"
 )
 
 type CliCommand interface {
-	sdk.Command
+	sdk2.Command
 }
 
 func NewCliCommand(fileSystem afero.Fs) CliCommand {
@@ -46,5 +46,5 @@ func newCliCommand(fileSystem afero.Fs) *cliCommand {
 }
 
 type cliCommand struct {
-	sdk.BaseCommand
+	sdk2.BaseCommand
 }

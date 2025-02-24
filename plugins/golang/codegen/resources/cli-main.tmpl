@@ -1,0 +1,45 @@
+package main
+
+import (
+	"fmt"
+	"github.com/spf13/cobra"
+	"os"
+)
+
+// Example usage:
+// go run main.go greet Alice
+// Output: Hello, Alice!
+//
+// go run main.go greet Bob -m "Hi"
+// Output: Hi, Bob!
+
+func main() {
+	var rootCmd = &cobra.Command{
+		Use:   "app",
+		Short: "A simple CLI application",
+		Long:  "This is a simple example of a CLI application using Cobra in Go.",
+	}
+
+	var greetCmd = &cobra.Command{
+		Use:   "greet [name]",
+		Short: "Greet a person",
+		Long:  "Generates a greeting message for the specified person.",
+		Args:  cobra.MinimumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			greeting, _ := cmd.Flags().GetString("message")
+			name := args[0]
+			fmt.Printf("%s, %s!\n", greeting, name)
+		},
+	}
+
+	// Adding a flag to the greet command
+	greetCmd.Flags().StringP("message", "m", "Hello", "Custom greeting message")
+
+	// Adding subcommands to root command
+	rootCmd.AddCommand(greetCmd)
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+}
